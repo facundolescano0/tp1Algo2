@@ -1,10 +1,10 @@
-#include <stdlib.h>
 #include "pokemon.h"
-#include "tipo.h"
-#include <stdio.h>
 #include "ataque.h"
-#include <string.h>
+#include "tipo.h"
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_LONG 20
 #define MAX_ATAQUES 3
@@ -119,7 +119,6 @@ pokemon_t *realloc_poke(informacion_pokemon_t *info)
 	pokes = (unsigned long int)(info->cant_poke + 1);
 	pokemon_t *pokemon = realloc(info->pokemon, sizeof(pokemon_t) * pokes);
 	if (!pokemon) {
-		//free(info->pokemon);
 		return NULL;
 	}
 	return pokemon;
