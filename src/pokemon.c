@@ -66,22 +66,30 @@ informacion_pokemon_t *crear_info(informacion_pokemon_t *info)
 
 pokemon_t *llenar_pokemon(const char *string, pokemon_t *pokemon)
 {
-	if (!string || !pokemon || !cuenta_separadores(string, 1))
+	if (!string || !pokemon || !cuenta_separadores(string, 1)) {
+		free(pokemon);
 		return NULL;
+	}
+
 	char type;
 	int cant_leidos = sscanf(string, "%[^;];%c", pokemon->nombre, &type);
 	if (cant_leidos != 2) {
+		free(pokemon);
 		return NULL;
 	}
 	pokemon->tipo = definir_tipo(type);
-	if (pokemon->tipo == -1)
+	if (pokemon->tipo == -1) {
+		free(pokemon);
 		return NULL;
+	}
+
 	return pokemon;
 }
 
 pokemon_t *cargar_ataque(const char *string, pokemon_t *poke)
 {
 	if (!string || !poke) {
+		free(poke);
 		return NULL;
 	}
 
@@ -100,14 +108,15 @@ pokemon_t *cargar_ataque(const char *string, pokemon_t *poke)
 		free(poke);
 		return NULL;
 	}
+	enum TIPO tipo = definir_tipo(type);
 
-	atq->tipo = definir_tipo(type);
-
-	if (atq->tipo == -1 || !atq) {
+	if (tipo == -1) {
 		free(poke);
 		return NULL;
 	}
 
+	atq->tipo = tipo;
+	poke->cant_ataques++;
 	return poke;
 }
 
@@ -119,6 +128,7 @@ pokemon_t *realloc_poke(informacion_pokemon_t *info)
 	pokes = (unsigned long int)(info->cant_poke + 1);
 	pokemon_t *pokemon = realloc(info->pokemon, sizeof(pokemon_t) * pokes);
 	if (!pokemon) {
+		free(info->pokemon);
 		return NULL;
 	}
 	return pokemon;
@@ -129,8 +139,11 @@ informacion_pokemon_t *agrandar_pokemon(informacion_pokemon_t *info)
 	if (!info)
 		return NULL;
 	info->pokemon = realloc_poke(info);
-	if (!info->pokemon)
+	if (!info->pokemon) {
+		free(info->pokemon);
 		return NULL;
+	}
+
 	return info;
 }
 
@@ -164,8 +177,9 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 	if (!path)
 		return NULL;
 	FILE *archivo = fopen(path, "r");
-	if (!archivo)
+	if (!archivo) {
 		return NULL;
+	}
 
 	char linea[MAX_LINEA];
 	int contador_lineas = 0;
@@ -180,12 +194,12 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 		if (contador_lineas % 4 == 0) {
 			poke_aux = llenar_pokemon(linea, poke_aux);
 			if (!poke_aux && info->cant_poke == 0) {
-				free(poke_aux);
 				free(info);
+				fclose(archivo);
 				return NULL;
 			}
 			if (!poke_aux) {
-				free(poke_aux);
+				fclose(archivo);
 				return info;
 			}
 
@@ -193,14 +207,13 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 			poke_aux = cargar_ataque(linea, poke_aux);
 
 			if (!poke_aux && info->cant_poke == 0) {
-				free(poke_aux);
 				free(info);
+				fclose(archivo);
 				return NULL;
 			} else if (!poke_aux) {
-				free(poke_aux);
+				fclose(archivo);
 				return info;
 			}
-			poke_aux->cant_ataques++;
 
 			if (poke_aux->cant_ataques == 3) {
 				agrandar_pokemon(info);
@@ -211,7 +224,7 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 					free(poke_aux);
 					return info;
 				}
-				if (info->pokemon) {
+				if (&(info->pokemon[info->cant_poke])) {
 					info->cant_poke++;
 				}
 			}
@@ -221,7 +234,7 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 
 	fclose(archivo);
 
-	if (info) {
+	if (info->cant_poke > 0) {
 		info = ordenar_pokemones(info);
 		free(poke_aux);
 	} else if (!info) {
@@ -305,7 +318,7 @@ void pokemon_destruir_todo(informacion_pokemon_t *ip)
 {
 	if (!ip)
 		return;
-	if (ip->cant_poke != 0) {
+	if (ip->cant_poke > 0) {
 		free(ip->pokemon);
 		free(ip);
 	}
