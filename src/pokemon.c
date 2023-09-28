@@ -188,6 +188,7 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 	if (!info || !poke_aux) {
 		free(info);
 		free(poke_aux);
+		fclose(archivo);
 		return NULL;
 	}
 	while (fgets(linea, sizeof(linea), archivo) != NULL) {
@@ -222,6 +223,7 @@ informacion_pokemon_t *pokemon_cargar_archivo(const char *path)
 				poke_aux = inicializar_poke(poke_aux);
 				if (!poke_aux) {
 					free(poke_aux);
+					fclose(archivo);
 					return info;
 				}
 				if (&(info->pokemon[info->cant_poke])) {
